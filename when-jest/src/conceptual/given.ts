@@ -5,42 +5,60 @@ interface Item {
 }
 
 export class Section {
-  name: string;
+  name?: string;
   items: Record<string, Item> = {};
 
-  constructor(items: Array<Item>, name = "it") {
+  constructor(items: Array<Item>, name?: string) {
     this.name = name;
     items.forEach((x) => {
       this.items[x.name] = x;
     });
   }
 
-  get(itemName: string) {
+  get(itemName: string): Item {
+    if (!Object.keys(this.items).includes(itemName))
+      throw Error(
+        `Cannot find item ${itemName} in section ${this.name ?? "[default]"}`
+      );
     return this.items[itemName];
   }
 
-  async retrieve(itemName: string) {
-    const found = await this.get(itemName).selector();
-    expect(found).toBeTruthy();
-    return found;
+  retrieve(itemName: string): any {
+    return this.get(itemName).selector();
   }
 
   async perform(behavior: string, itemName: string, parameter?: any) {
-    const obj = await this.retrieve(itemName);
+    await Promise.resolve("foo"); // TODO: is await needed?
+    const obj = this.retrieve(itemName);
     const item = this.get(itemName);
+
     if (!item.behaviors || !Object.keys(item.behaviors).includes(behavior)) {
       throw Error(`Item ${itemName} does not have the behavior ${behavior}`);
     }
-    item.behaviors[behavior].apply(item, [obj, parameter]);
+
+    const func = item.behaviors[behavior];
+    if (func.constructor.name === "AsyncFunction") {
+      await func.apply(item, [obj, parameter]);
+    } else {
+      func.apply(item, [obj, parameter]);
+    }
   }
 }
 
 const given = (section: Section) => {
   const when = async (action: string, itemName: string, parameter?: any) => {
-    section.perform(action, itemName, parameter);
+    await section.perform(action, itemName, parameter);
   };
 
-  return { when };
+  const expectInSection = (actual: any): jest.JestMatchers<any> => {
+    if (typeof actual === "string") {
+      return expect(section.retrieve(actual));
+    }
+
+    return expect(actual);
+  };
+
+  return { when, expect: expectInSection };
 };
 
 export { given };
