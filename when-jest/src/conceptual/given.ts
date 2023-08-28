@@ -1,6 +1,6 @@
-interface Item {
+export interface Item {
   name: string;
-  selector: Function;
+  selector: (section: Section) => any;
   behaviors?: Record<string, Function>;
 }
 
@@ -23,8 +23,11 @@ export class Section {
     return this.items[itemName];
   }
 
-  retrieve(itemName: string): any {
-    return this.get(itemName).selector();
+  retrieve<T>(itemName: string): T {
+    const section = this;
+    const item = this.get(itemName);
+    const selector = item.selector;
+    return selector.apply(section, [section]);
   }
 
   async perform(behavior: string, itemName: string, parameter?: any) {
