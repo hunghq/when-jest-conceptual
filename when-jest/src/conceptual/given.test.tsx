@@ -1,5 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { Section, given } from "./given";
 
@@ -20,7 +19,7 @@ describe("Counter", () => {
       name: "incrementButton",
       selector: () => screen.getByRole("button"),
       behaviors: {
-        click: (item: Element) => userEvent.click(item),
+        click: fireEvent.click,
       },
     },
     {

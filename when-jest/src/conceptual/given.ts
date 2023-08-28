@@ -28,7 +28,6 @@ export class Section {
   }
 
   async perform(behavior: string, itemName: string, parameter?: any) {
-    await Promise.resolve("foo"); // TODO: is await needed?
     const obj = this.retrieve(itemName);
     const item = this.get(itemName);
 
